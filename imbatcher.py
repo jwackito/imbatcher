@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #-*-coding:utf-8-*-
 ###############################################################################
 #	imbatcher - Programa para separar lotes de fotos similares
@@ -18,71 +19,66 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-from PIL import Image
-from numpy import *
-from sys import *
-from os import *
-from glob import *
-from natsorted import *
-
-#TODO: mejorar el manejo de parametros al programa principal
-#	basepath es obligatorio
-#	thrsh opcional (por defecto 30)
-#TODO: Manejar diferentes tamaños de imagen.
-
-def ayuda():
-	print 'MODO DE USO: '
-	print '\t' + argv[0] + ' -h'
-	print '\t\tImprime esta ayuda'
-	print '\t' + argv[0] + ' directorio_de_imagenes [umbral]'
-	print '\t\tSi umbral no está seteada, utiliza 10 que generalmente funciona bien.'
-	print '\t\tValores muy bajos para umbral pueden detectar fotos como diferentes sin serlo'
-	print '\t\ty valores muy altos pueden de detectar fotos diferentes como iguales.'
-	exit()
-
 def msd(im1path, im2path, thrsh):
+	from PIL import Image
+	import numpy
 	'''Devuelve True si la Mean Square Difference es entre im1 e im2 es menor que el umbral thrsh'''
-	im1 = asarray(Image.open(im1path))
-	im2 = asarray(Image.open(im2path))
+	im1 = Image.open(im1path)
+	im2 = Image.open(im2path)
+	if im1.size != im2.size:
+		return False
+	else:
+		(w,h)= im1.size
+	im1 = numpy.asarray(im1)
+	im2 = numpy.asarray(im2)
 	im1 = im1.astype(int)
 	im2 = im2.astype(int)
 	
 	diff = abs(im1 - im2)
 	#print im1path + ' ' + ' ' + im2path + ' ' + str(sqrt((diff * diff).sum() / float(800*600)))
-	return sqrt((diff * diff).sum() / float(800*600)) < thrsh
+	return numpy.sqrt((diff * diff).sum() / float(w*h)) < thrsh
 
-if len(argv) >= 2:
-	if argv[1] == '-h':
-		ayuda()
-	else:
-		basepath = argv[1]
-if len(argv) >= 3:
-	try:thrsh = int(argv[2])
-	except: ayuda()
+def process(basepath, thrsh, fformat, prefix):
+	import os
+	import glob
+	import natsorted
+	import io
 
-files = natsorted((glob(basepath + '*.png')), cmp=natcmp)
-print 'Procesando el directorio ' + basepath
-print str(len(files)) + ' archivos encontrados...'
-batched = []
-filerfl = 1 
-for i in range(0, len(files)-1):
-#for i in range(9090,9095):
-	if not msd(files[i], files[i+1], thrsh):
-		import io
-		batched.append(files[i])
-		f = io.open(basepath + str(filerfl) + '.rfl', 'wb')
-		for fi in batched:
-			f.write(fi+'\n')
-		filerfl+=1
-		print '***********END BATCH*****' + files [i+1] + '******'
-		batched = []
-	else:
-		batched.append(files[i])
+	if basepath[-1] != '/':
+		basepath += '/'
+	files = natsorted.natsorted((glob.glob(basepath + '*.' + fformat)), cmp=natsorted.natcmp)
+	print 'Processing the directory ' + basepath
+	print str(len(files)) + ' files found...'
+	batched = []
+	filerfl = 1 
+	for i in range(0, len(files)-1):
+		if not msd(files[i], files[i+1], thrsh):
+			batched.append(files[i])
+			f = io.open(basepath + prefix + str(filerfl) + '.rfl', 'wb')
+			for fi in batched:
+				f.write(fi+'\n')
+			filerfl+=1
+			print '***********END BATCH*****' + files [i+1] + '******'
+			batched = []
+		else:
+			batched.append(files[i])
+	batched.append(files[i])
+	f = io.open(basepath + prefix + str(filerfl) + '.rfl', 'wb')
+	for fi in batched:
+		f.write(fi+'\n')
+	filerfl+=1
+	print '***********END BATCH*****' + files [i+1] + '******'
 
-import io
-batched.append(files[i])
-f = io.open(basepath + str(filerfl) + '.rfl', 'wb')
-for fi in batched:
-	f.write(fi+'\n')
-filerfl+=1
-print '***********END BATCH*****' + files [i+1] + '******'
+def __Main__():
+	import argparse
+	
+	parser = argparse.ArgumentParser(description='Mean Square Difference based image batcher. The program generate a set of Registax 6 frame list (.rfl) files, one for each batch of images.')	
+	parser.add_argument('-t', '--threshold', dest='thrsh', type=int, default=18, help='El umbral para las diferencias.')
+	parser.add_argument('-f', '--format', dest='fformat', choices=['jpg', 'png'], default='png', help='El formato de los archivos a tratar.')
+	parser.add_argument('-p', '--list-prefix', dest='prefix', default='list', help='El prefijo para los nombres de los .rfl')
+	parser.add_argument('-d', '--dir', dest='basepath', required=True, help='El directorio donde están las fotos.')
+	args = parser.parse_args()
+	#must be one of the formats provided here http://www.pythonware.com/library/pil/handbook/index.htm
+	process(args.basepath, args.thrsh, args.fformat, args.prefix)
+
+__Main__()
