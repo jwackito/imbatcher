@@ -74,7 +74,7 @@ def __Main__():
 	
 	parser = argparse.ArgumentParser(description='Mean Square Difference based image batcher. The program generate a set of Registax 6 frame list (.rfl) files, one for each batch of images.')	
 	parser.add_argument('-t', '--threshold', dest='thrsh', type=int, default=18, help='El umbral para las diferencias.')
-	parser.add_argument('-f', '--format', dest='fformat', choices=['jpg', 'png'], default='png', help='El formato de los archivos a tratar.')
+	parser.add_argument('-f', '--format', dest='fformat', choices=['jpg', 'png', 'bmp'], default='png', help='El formato de los archivos a tratar.')
 	parser.add_argument('-p', '--list-prefix', dest='prefix', default='list', help='El prefijo para los nombres de los .rfl')
 	parser.add_argument('-d', '--dir', dest='basepath', required=True, help='El directorio donde están las fotos.')
 	args = parser.parse_args()
