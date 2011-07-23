@@ -19,7 +19,7 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-def msd(im1path, im2path, thrsh):
+def msd(im1path, im2path, thrsh, verbose):
 	from PIL import Image
 	import numpy
 	'''Devuelve True si la Mean Square Difference es entre im1 e im2 es menor que el umbral thrsh'''
@@ -36,9 +36,11 @@ def msd(im1path, im2path, thrsh):
 	
 	diff = abs(im1 - im2)
 	#print im1path + ' ' + ' ' + im2path + ' ' + str(sqrt((diff * diff).sum() / float(800*600)))
+	if verbose:
+		print im1path + ' ' + ' ' + im2path + ' ' + str(numpy.sqrt((diff * diff).sum() / float(w*h)))
 	return numpy.sqrt((diff * diff).sum() / float(w*h)) < thrsh
 
-def process(basepath, thrsh, fformat, prefix):
+def process(basepath, thrsh, fformat, prefix, verbose):
 	import os
 	import glob
 	import natsorted
@@ -52,7 +54,7 @@ def process(basepath, thrsh, fformat, prefix):
 	batched = []
 	filerfl = 1 
 	for i in range(0, len(files)-1):
-		if not msd(files[i], files[i+1], thrsh):
+		if not msd(files[i], files[i+1], thrsh, verbose):
 			batched.append(files[i])
 			f = io.open(basepath + prefix + str(filerfl) + '.rfl', 'wb')
 			for fi in batched:
@@ -76,9 +78,10 @@ def __Main__():
 	parser.add_argument('-t', '--threshold', dest='thrsh', type=int, default=18, help='El umbral para las diferencias.')
 	parser.add_argument('-f', '--format', dest='fformat', choices=['jpg', 'png', 'bmp'], default='png', help='El formato de los archivos a tratar.')
 	parser.add_argument('-p', '--list-prefix', dest='prefix', default='list', help='El prefijo para los nombres de los .rfl')
+	parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Mucha mucha salida. Puede hacer más lento el proceso. Util para setear el umbral.')
 	parser.add_argument('-d', '--dir', dest='basepath', required=True, help='El directorio donde están las fotos.')
 	args = parser.parse_args()
 	#must be one of the formats provided here http://www.pythonware.com/library/pil/handbook/index.htm
-	process(args.basepath, args.thrsh, args.fformat, args.prefix)
+	process(args.basepath, args.thrsh, args.fformat, args.prefix, args.verbose)
 
 __Main__()
