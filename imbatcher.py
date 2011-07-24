@@ -40,6 +40,20 @@ def msd(im1path, im2path, thrsh, verbose):
 		print im1path + ' ' + ' ' + im2path + ' ' + str(numpy.sqrt((diff * diff).sum() / float(w*h)))
 	return numpy.sqrt((diff * diff).sum() / float(w*h)) < thrsh
 
+def findthrsh(files, index, verbose):
+	from PIL import Image
+	import numpy
+	(w,h)=Image.open(files[index]).size
+	partial = 0
+	for i in range(index, index + 10):
+		im1 = numpy.asarray(Image.open(files[i])).astype(int)
+		im2 = numpy.asarray(Image.open(files[i+1])).astype(int)
+		diff = abs(im1 - im2)
+		partial+=(numpy.sqrt((diff * diff).sum() / float(w*h)))*1.3
+	if verbose:
+		print 'Using threshold = ' + str(int((partial/10)+5))
+	return int((partial/10)+5)
+
 def process(basepath, thrsh, fformat, prefix, verbose):
 	import os
 	import glob
@@ -53,6 +67,11 @@ def process(basepath, thrsh, fformat, prefix, verbose):
 	print str(len(files)) + ' files found...'
 	batched = []
 	filerfl = 1 
+	adaptive = False
+	if thrsh == 0:
+		#Using addaptive threshold
+		adaptive = True
+		thrsh = findthrsh(files, 0, verbose)
 	for i in range(0, len(files)-1):
 		if not msd(files[i], files[i+1], thrsh, verbose):
 			batched.append(files[i])
@@ -62,6 +81,8 @@ def process(basepath, thrsh, fformat, prefix, verbose):
 			filerfl+=1
 			print '***********END BATCH*****' + files [i+1] + '******'
 			batched = []
+			if adaptive:
+				thrsh = findthrsh(files, i+1, verbose)
 		else:
 			batched.append(files[i])
 	batched.append(files[i])
@@ -75,7 +96,7 @@ def __Main__():
 	import argparse
 	
 	parser = argparse.ArgumentParser(description='Mean Square Difference based image batcher. The program generate a set of Registax 6 frame list (.rfl) files, one for each batch of images.')	
-	parser.add_argument('-t', '--threshold', dest='thrsh', type=int, default=18, help='El umbral para las diferencias.')
+	parser.add_argument('-t', '--threshold', dest='thrsh', type=int, default=0, help='El umbral para las diferencias. Por defecto es 0, para umbral adaptativo.')
 	parser.add_argument('-f', '--format', dest='fformat', choices=['jpg', 'png', 'bmp'], default='png', help='El formato de los archivos a tratar.')
 	parser.add_argument('-p', '--list-prefix', dest='prefix', default='list', help='El prefijo para los nombres de los .rfl')
 	parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Mucha mucha salida. Puede hacer más lento el proceso. Util para setear el umbral.')
