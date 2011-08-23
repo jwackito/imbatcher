@@ -37,8 +37,8 @@ def msd(im1path, im2path, thrsh, verbose):
 	diff = abs(im1 - im2)
 	#print im1path + ' ' + ' ' + im2path + ' ' + str(sqrt((diff * diff).sum() / float(800*600)))
 	if verbose:
-		print im1path + ' ' + ' ' + im2path + ' ' + str(numpy.sqrt((diff * diff).sum() / float(w*h)))
-	return numpy.sqrt((diff * diff).sum() / float(w*h)) < thrsh
+		print im1path + ' ' + ' ' + im2path + ' ' + str(numpy.sqrt(abs((diff * diff).sum() / float(w*h))))
+	return numpy.sqrt(abs((diff * diff).sum() / float(w*h))) < thrsh
 
 def findthrsh(files, index, verbose):
 	from PIL import Image
@@ -49,7 +49,7 @@ def findthrsh(files, index, verbose):
 		im1 = numpy.asarray(Image.open(files[i])).astype(int)
 		im2 = numpy.asarray(Image.open(files[i+1])).astype(int)
 		diff = abs(im1 - im2)
-		partial+=(numpy.sqrt((diff * diff).sum() / float(w*h)))*1.3
+		partial+=(numpy.sqrt(abs((diff * diff).sum() / float(w*h))))*1.3
 	if verbose:
 		print 'Using threshold = ' + str(int((partial/10)+5))
 	return int((partial/10)+5)
