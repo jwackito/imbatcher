@@ -4,6 +4,7 @@
 #               Compara imágenes de a dos utilizando la Mean Square Difference
 #				
 #       Copyright (C) 2011  Joaquín Bogado <joaquinbogado en gmail.com>
+#       Version 1.1
 #
 #       This program is free software: you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -28,3 +29,5 @@ numpy
 argparse
 PIL (Python Image Library)
 
+Version 1.1
+- Solucionado el problema de las raices cuadradas negativas.
